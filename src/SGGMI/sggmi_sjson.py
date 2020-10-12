@@ -21,8 +21,10 @@ if sjson is not None:
                 if key < len(data) and key >= 0:
                     return data[key]
             return DNE
+
         if isinstance(data, OrderedDict):
             return data.get(key, DNE)
+
         return DNE
 
     def sjson_clearDNE(data):
@@ -32,6 +34,7 @@ if sjson is not None:
                     del data[k]
                     continue
                 data[k] = sjson_clearDNE(v)
+
         if isinstance(data, list):
             L = []
             for i, v in enumerate(data):
@@ -39,11 +42,14 @@ if sjson is not None:
                     continue
                 L.append(sjson_clearDNE(v))
             data = L
+
         return data
 
     def sjson_read(filename):
         try:
-            return sjson.loads(open(filename).read().replace("\\", "\\\\"))
+            with open(fiename, "r") as file_in:
+                file_contents = file_in.read()
+                return sjson.loads(file_contents.replace("\\", "\\\\"))
         except sjson.ParseException as e:
             alt_print(repr(e))
             return DNE
