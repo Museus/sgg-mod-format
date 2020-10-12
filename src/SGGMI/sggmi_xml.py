@@ -4,25 +4,30 @@ import xml.etree.ElementTree as xml
 xml_RESERVED_replace = "_replace"
 xml_RESERVED_delete = "_delete"
 
+
 def xml_safeget(data, key):
     if isinstance(data, list):
         if isinstance(key, int):
-            if key < len(data) and key >= 0:
+            if 0 <= key < len(data):
                 return data[key]
         return DNE
+
     if isinstance(data, xml.ElementTree):
         root = data.getroot()
         if root:
             return root.get(k, DNE)
+
     if isinstance(data, xml.Element):
         return data.get(key, DNE)
     return DNE
+
 
 def xml_read(filename):
     try:
         return xml.parse(filename)
     except xml.ParseError:
         return DNE
+
 
 def xml_write(filename, content, start=None):
     if not isinstance(filename, str):
