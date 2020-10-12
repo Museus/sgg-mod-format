@@ -34,36 +34,48 @@ def xml_write(filename, content, start=None):
         return
     if not isinstance(content, xml.ElementTree):
         return
+
     content.write(filename)
 
     # Indentation styling
-    data = ""
-    if start:
-        data = start
+    data = start or ""
+
     with open(filename, "r") as file:
-        i = 0
+        indent = 0
+
         for line in file:
-            nl = False
-            if len(line.replace("\t", "").replace(" ", "")) > 1:
-                q = True
-                p = ""
-                for s in line:
-                    if s == '"':
-                        q = not q
-                    if p == "<" and q:
-                        if s == "/":
-                            i -= 1
+            line_no_whitespace = line.translate(str.maketrans("", "", " \t"))
+
+            if len(line_no_whitespace) > 1:
+                quoted = False
+                prev_char = ""
+
+                for char in line:
+                    if char == '"':
+                        quoted = not quoted
+
+                    if prev_char == "<" and not quoted:
+                        if char == "/":
+                            indent -= 1
                             data = data[:-1]
                         else:
-                            i += 1
+                            indent += 1
                         data += p
-                    if s == ">" and p == "/" and q:
-                        i -= 1
-                    if p in (" ") or (s == ">" and p == '"') and q:
-                        data += "\n" + "\t" * (i - (s == "/"))
-                    if s not in (" ", "\t", "<") or not q:
-                        data += s
-                    p = s
+
+                    if (prev_char, char) == ("/", ">") and not quoted:
+                        indent -= 1
+
+                    if (
+                        prev_char in (" ")
+                        or (prev_char, char) == ('"', ">")
+                        and not quoted
+                    ):
+                        data += "\n" + "\t" * (indent - (char == "/"))
+
+                    if char not in (" ", "\t", "<") or quoted:
+                        data += char
+
+                    prev_char = char
     open(filename, "w").write(data)
 
 
@@ -137,4 +149,3 @@ def xml_merge(infile, mapfile):
         mapdata = DNE
     indata = xml_map(indata, mapdata)
     xml_write(infile, indata, start)
-
