@@ -57,41 +57,51 @@ if sjson is not None:
     def sjson_write(filename, content):
         if not isinstance(filename, str):
             return
+
         if isinstance(content, OrderedDict):
             content = sjson.dumps(content)
         else:
             content = ""
-        with open(filename, "w") as f:
-            s = "{\n" + content + "}"
+
+        with open(filename, "w") as file_out:
+            curr_string = "{\n" + content + "}"
+            output = ""
 
             # Indentation styling
-            p = ""
-            S = ""
-            for c in s:
-                if c in ("{", "[") and p in ("{", "["):
-                    S += "\n"
-                if c in ("}", "]") and p in ("}", "]"):
-                    S += "\n"
-                S += c
-                if p in ("{", "[") and c not in ("{", "[", "\n"):
-                    S = S[:-1] + "\n" + S[-1]
-                if c in ("}", "]") and p not in ("}", "]", "\n"):
-                    S = S[:-1] + "\n" + S[-1]
-                p = c
-            s = S.replace(", ", "\n").split("\n")
-            i = 0
-            L = []
-            for S in s:
-                for c in S:
-                    if c in ("}", "]"):
-                        i = i - 1
-                L.append("  " * i + S)
-                for c in S:
-                    if c in ("{", "["):
-                        i = i + 1
-            s = "\n".join(L)
+            prev_char = ""
+            for char in curr_string:
+                if char in "{[" and prev_char in "{[":
+                    output += "\n"
 
-            f.write(s)
+                if char in "}]" and prev_char in "}]":
+                    output += "\n"
+
+                output += char
+
+                if char not in "{[\n" and prev_char in "{[":
+                    output = output[:-1] + "\n" + output[-1]
+
+                if char in "}]" and prev_char not in "}]\n":
+                    output = output[:-1] + "\n" + output[-1]
+
+                prev_char = char
+
+            TEMP_output_split = output.replace(", ", "\n").split("\n")
+            indent = 0
+            output_lines = []
+            for line in TEMP_output_split:
+                for char in line:
+                    if char in "}]":
+                        indent -= 1
+
+                output_lines.append("  " * indent + line)
+                for char in line:
+                    if char in "{[":
+                        indent += 1
+
+            final_output = "\n".join(output_lines)
+
+            file_out.write(final_output)
 
     def sjson_map(indata, mapdata):
         if mapdata is DNE:
